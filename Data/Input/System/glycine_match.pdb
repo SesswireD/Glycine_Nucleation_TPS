@@ -1,0 +1,13 @@
+REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-04-10
+ATOM      1  N   GLY A   1       8.350   4.540   6.390  1.00  0.00           N  
+ATOM      2  CA  GLY A   1       9.000   3.550   5.460  1.00  0.00           C  
+ATOM      3  C   GLY A   1       8.150   2.370   5.120  1.00  0.00           C  
+ATOM      4  O   GLY A   1       6.940   2.440   5.260  1.00  0.00           O  
+ATOM      5  O1  GLY A   1       8.850   1.380   4.890  1.00  0.00           O  
+ATOM      6  H1  GLY A   1       9.010   5.300   6.600  1.00  0.00           H  
+ATOM      7  H2  GLY A   1       7.620   5.030   5.850  1.00  0.00           H  
+ATOM      8  HA1 GLY A   1       9.310   4.200   4.640  1.00  0.00           H  
+ATOM      9  HA2 GLY A   1       9.890   3.180   5.970  1.00  0.00           H  
+ATOM     10  H3  GLY A   1       7.950   4.210   7.280  1.00  0.00           H  
+TER      11      GLY A   1
+END

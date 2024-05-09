@@ -1,0 +1,58 @@
+title                   = Crystal NVT Equilibration
+
+; Run parameters
+integrator              = md        ; leap-frog integrator
+nsteps                  = 5000000   ; 2 * 5000000 = 10000 ps = 10 ns
+dt                      = 0.002     ; 2 fs
+
+; Output control
+nstlog                   = 500  ; save log every 1.0 ps
+nstcalcenergy            = 500  ; calculate  energy every 1.0 ps
+nstenergy                = 500  ; save energy every 1.0 ps
+nstxout                  = 0    ; save coordinates every 1.0 ps (.trr)
+nstvout                  = 0    ; save velocities every 1.0 ps (.trr)
+nstfout                  = 0    ; nstvout, and nstfout (.trr)
+nstxout-compressed       = 500  ; save compressed coordinates every 1.0 ps (.xtc)
+
+; Nonbonded settings 
+cutoff-scheme           = Verlet    ; Buffered neighbor searching
+nstlist                 = 10        ; 20 fs, largely irrelevant with Verlet
+ns_type                 = grid      ; search neighboring grid cells
+pbc                     = xyz       ; 3-D PBC
+rlist                   = 1.0       ; ADDED FROM MD.MDP Cut-off distance for the short-range neighbor list in nm
+
+; Electrostatics
+coulombtype             = PME       ; Particle Mesh Ewald for long-range electrostatics
+rcoulomb                = 1.0       ; short-range electrostatic cutoff (in nm)
+
+pme_order               = 4         ; NOT IN MD.MDP cubic interpolation 
+fourierspacing          = 0.16      ; NOT IN MD.MDP grid spacing for FFT
+
+; vdw
+vdw-type                = cut-off   ; ADDED FROM MD.MDP
+rvdw                    = 1.0       ; short-range van der Waals cutoff (in nm)
+
+DispCorr                = EnerPres  ; NOT IN MD.MDP account for cut-off vdW scheme
+
+; Bond parameters
+constraints             = h-bonds   ; bonds involving H are constrained
+constraint_algorithm    = lincs     ; holonomic constraints
+lincs_order             = 4         ; also related to accuracy
+lincs-warnangle         = 30        ; ADDED FROM MD.MDP
+continuation            = no        ; first dynamics run 
+
+lincs_iter              = 1         ; NOT IN MD.MDP accuracy of LINCS
+
+; Temperature coupling is on
+tcoupl                  = V-rescale ; modified Berendsen thermostat
+tc-grps                 = system    ; 
+tau_t                   = 0.1       ; time constant, in ps
+ref_t                   = 300       ; reference temperature
+
+; Pressure coupling is off
+pcoupl                  = no        ; no pressure coupling in NVT
+
+; Velocity generation
+gen_vel                 = yes       ; NOT IN MD.MDP assign velocities from Maxwell distribution
+gen_temp                = 300       ; NOT IN MD.MDP temperature for Maxwell distribution
+gen_seed                = -1        ; NOT IN MD.MDP generate a random seed
