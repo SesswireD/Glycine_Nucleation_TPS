@@ -152,10 +152,10 @@ def run_simulation(system):
 
 
 #PARAMETERS
-# rx, ry, rz = 3, 1, 3
-# morph_type = "alpha"
-# box_size = 5.0
-# distance = 1.8
+rx, ry, rz = 3, 1, 3
+morph_type = "alpha"
+box_size = 5.0
+distance = 0.4
 
 #CHOOSE SYSTEM
 # system = f"Data/Output/System/Crystal/{morph_type}_glycine_crystal_{rx}_{ry}_{rz}_box_{box_size}_solv"
@@ -165,5 +165,23 @@ def run_simulation(system):
 # equilibrate_system(system)
 # run_simulation(system)
 
+input_path  = "Data/Output/Simulation/"
+
+sim_path    = "Data/Output/System/Crystal/"
+output_path = "../../../Runs/Input/"
 
 
+
+
+
+system = "alpha_glycine_crystal_3_1_3_box_5.0"
+
+#Assemble .gro and .top with parameters in .mdp for simulation
+os.system(
+    f"gmx grompp "                          #File assembly command
+    f"-f Data/Input/Simulation/nvt300K10ns.mdp "     #Input parameters
+    f"-c {input_path}{system}_minim.gro "     #Input coordinate file
+    f"-p {sim_path+system}.top "          #Input toology
+    f"-o {output_path+system}_nvt300K.tpr "      #Result of assembly
+    f"-po {output_path+system}_nvt300K.mdp "         #All parameters used
+)

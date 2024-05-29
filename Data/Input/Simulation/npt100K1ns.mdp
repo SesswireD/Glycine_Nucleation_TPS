@@ -1,14 +1,15 @@
-title                   = OPLS Lysozyme NPT equilibration 
-;define                  = -DPOSRES  ; position restrain the protein
+title                   = Crystal NPT equilibration
+
 ; Run parameters
 integrator              = md        ; leap-frog integrator
-nsteps                  = 50000     ; 2 fs * 50000 = 100 ps
+nsteps                  = 500000     ; 2 fs * 500000 = 1000 ps = 1 ns
 dt                      = 0.002     ; 2 fs
 
 ; Output control
 nstxout                 = 0       ; save coordinates every 1.0 ps
 nstvout                 = 0       ; save velocities every 1.0 ps
-nstenergy               = 0       ; save energies every 1.0 ps
+nstcalcenergy           = 500     ; calculate  energy every 1.0 ps
+nstenergy               = 500     ; save energies every 1.0 ps
 nstlog                  = 0       ; update log file every 1.0 ps
 nstxout-compressed      = 500     ; save compressed coordinates every 1.0 ps (.xtc)
 
@@ -42,7 +43,7 @@ fourierspacing          = 0.16      ; grid spacing for FFT
 tcoupl                  = V-rescale             ; modified Berendsen thermostat
 tc-grps                 = system                ; two coupling groups - more accurate
 tau_t                   = 0.1                   ; time constant, in ps
-ref_t                   = 300                   ; reference temperature, one for each group, in K
+ref_t                   = 100                   ; reference temperature, one for each group, in K
 
 ; Pressure coupling is on
 pcoupl                  = Parrinello-Rahman     ; Pressure coupling on in NPT

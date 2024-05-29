@@ -1,0 +1,52 @@
+title               = Full MD run 
+
+; Run parameters     
+integrator          =  md       ; Leap Frog algorithm
+nsteps              =  50000000 ; 2 * 50000000 = 100000 ps = 100 ns
+dt                  =  0.002    ; 2 fs
+
+; output control 
+nstlog                   = 500  ; save log every 1.0 ps
+nstcalcenergy            = 500  ; calculate  energy every 1.0 ps
+nstenergy                = 500  ; save energy every 1.0 ps
+nstxout                  = 0    ; save coordinates every 1.0 ps (.trr)
+nstvout                  = 0    ; save velocities every 1.0 ps (.trr)
+nstfout                  = 0    ; nstvout, and nstfout (.trr)
+nstxout-compressed       = 500  ; save compressed coordinates every 1.0 ps (.xtc)
+
+; LINCS for waters    
+continuation             =  no       ; Apply constraints to the start configuration and reset shells
+constraint-algorithm     =  lincs    ; LINear Constraints Solver                
+constraints              =  hbonds   ; Convert the bonds with H-atoms to constraints
+lincs-order              =  4        ; Highest order in the expansion of the constraint coupling matrix
+lincs-warnangle          =  30       ; Maximum angle that a bond can rotate before LINCS will complain in degrees
+
+; neighbour searching
+cutoff-scheme       = verlet ; Generate a pair list with buffering.
+nstlist             = 10     ; Frequency to update the neighbor list. in steps
+ns_type             = grid   ; Check atoms in neighboring grid cells when constructing a new neighbor list
+pbc                 = xyz    ; Use periodic boundary conditions in all directions
+rlist               = 1.0    ; Cut-off distance for the short-range neighbor list in nm
+
+
+; electrostatic
+coulombtype         = PME    ; Fast smooth Particle-Mesh Ewald electrostatics
+rcoulomb            = 1.0    ; The distance for the Coulomb cut-off in nm
+
+; vdw
+vdw-type            = cut-off  ; Plain cut-off with pair list radius rlist and VdW cut-off 
+rvdw                = 1.0      ; Distance for the LJ or Buckingham cut-off in nm
+
+
+; temperature
+Tcoupl              = v-rescale      ; Temperature coupling using velocity rescaling with a stochastic term
+tc_grps             = system         ; Groups to couple to separate temperature baths
+tau_t               = 0.1            ; Time constant for coupling in ps
+ref_t               = 300            ; Reference temperature for coupling in K
+
+; pressure
+pcoupl              = Parrinello-Rahman ; Extended-ensemble pressure coupling where the box vectors are subject to an equation of motion
+pcoupltype          = isotropic         ; Isotropic pressure coupling with time constant
+tau_p               = 1.0               ; The time constant for pressure coupling in ps
+compressibility     = 4.5e-5            ; The compressibility (in bar-1) For water at 1 atm and 300 K the compressibility is 4.5e-5
+ref_p               = 1.0               ;  The reference pressure for coupling in bar
