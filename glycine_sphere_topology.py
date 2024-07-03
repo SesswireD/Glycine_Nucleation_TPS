@@ -181,12 +181,14 @@ def build_spherical_system(system, distance, point = None):
 
 
 #PARAMETERS:
-# rx, ry, rz = 3, 1, 3
-# morph_type = "alpha"
-# box_size = 5.0
-# distance = 0.4
-# system = f"{morph_type}_glycine_crystal_{rx}_{ry}_{rz}_box_{box_size}"
+rx, ry, rz = 3, 1, 3
+morph_type = "alpha"
+box_size = 5.0
+distance = 1.2
+system = f"{morph_type}_glycine_crystal_{rx}_{ry}_{rz}_box_{box_size}"
 
 #Build sphere system with different cluster radii
 # for i in np.linspace(1.8, 0.4, 8 ):
-#     build_spherical_system(system, round(i,1))
+# build_spherical_system(system, round(i,1))
+
+# build_spherical_system(system, distance)

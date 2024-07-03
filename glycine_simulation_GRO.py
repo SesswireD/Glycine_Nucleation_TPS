@@ -174,14 +174,14 @@ output_path = "../../../Runs/Input/"
 
 
 
-system = "alpha_glycine_crystal_3_1_3_box_5.0"
+system = "alpha_glycine_crystal_3_1_3_box_5.0_solv"
 
 #Assemble .gro and .top with parameters in .mdp for simulation
 os.system(
     f"gmx grompp "                          #File assembly command
-    f"-f Data/Input/Simulation/nvt300K10ns.mdp "     #Input parameters
+    f"-f Data/Input/Simulation/npt300K10ns.mdp "     #Input parameters
     f"-c {input_path}{system}_minim.gro "     #Input coordinate file
-    f"-p {sim_path+system}.top "          #Input toology
-    f"-o {output_path+system}_nvt300K.tpr "      #Result of assembly
-    f"-po {output_path+system}_nvt300K.mdp "         #All parameters used
+    f"-p {sim_path+system}.top "              #Input toology
+    f"-o {output_path+system}_npt300KUPDATEDMPD.tpr "      #Result of assembly
+    f"-po {output_path+system}_npt300KUPDATEDMDP.mdp "         #All parameters used
 )

@@ -237,6 +237,7 @@ def write_gro_file(filename, cell_grid, lattice, mask, morph_type):
     """
     #initialize index count
     index = 1
+    mol_index = 1
 
     #Open the file
     with open(filename, 'w') as file:
@@ -256,10 +257,16 @@ def write_gro_file(filename, cell_grid, lattice, mask, morph_type):
                 #Loop through all the atoms and coord in this unit cell
                 for atom, coord in zip(atoms, coordinates):
                     #Use f string to get correct spacing between entries
-                    line = f"    1GLY{atom:>7}{index:>5}{float(coord[0])*0.1:>8.3f}{float(coord[1]*0.1):>8.3f}{float(coord[2]*0.1):>8.3f}\n"
+                    line = f"    {mol_index}GLY{atom:>7}{index:>5}{float(coord[0])*0.1:>8.3f}{float(coord[1]*0.1):>8.3f}{float(coord[2]*0.1):>8.3f}\n"
                     file.write(line)
                     #Increment index
                     index+=1
+                    # print(index)
+                    # print(index%10)
+                    if (index % 11) == 0:
+                        mol_index += 1
+                        # print("YESSS")
+                        # print(mol_index)
 
         #Calculate lattice definition
         box_size = calculate_lattice_length(lattice) * 0.1
@@ -499,7 +506,7 @@ def build_crystal_system(rx,ry,rz, morph_type, box_size, max_sol=np.inf):
     #Check for crystal type
     if morph_type == "alpha":
         #Collect atoms by molecule and lose stray atoms for alpha glycine crystal
-        collected_grid = collect_alpha_molecules(cell_grid, mask)
+        cell_grid = collect_alpha_molecules(cell_grid, mask)
 
     if morph_type == "beta":
         raise NotImplemented
@@ -508,7 +515,10 @@ def build_crystal_system(rx,ry,rz, morph_type, box_size, max_sol=np.inf):
         raise NotImplemented
 
     #Save the initial crystal
-    write_gro_file(f"Data/Output/System/Crystal/{morph_type}_glycine_crystal_{rx}_{ry}_{rz}.gro", collected_grid, lattice, mask, morph_type)
+    write_gro_file(f"Data/Output/System/Crystal/{morph_type}_glycine_crystal_{rx}_{ry}_{rz}.gro", cell_grid, lattice, mask, morph_type)
+
+    #Convert the .gro file (Overwrites the input file)
+    convert_coordinates(f"Data/Output/System/Crystal/{morph_type}_glycine_crystal_{rx}_{ry}_{rz}.gro")
 
     #Solvate the crystal with water
     solvate_crystal(f"Data/Output/System/Crystal/{morph_type}_glycine_crystal_{rx}_{ry}_{rz}.gro", box_size, morph_type, rx, ry, rz, max_sol)
@@ -531,11 +541,11 @@ def build_crystal_system(rx,ry,rz, morph_type, box_size, max_sol=np.inf):
 
 
 #PARAMETERS:
-# rx, ry, rz = 3, 1, 3
-# morph_type = "alpha"
-# mask_type = "square"
-# box_size = 5.0
+rx, ry, rz = 3, 1, 3
+morph_type = "alpha"
+mask_type = "square"
+box_size = 5.0
 
 #Build a solvated glycine crystal system of monomers
-# build_crystal_system(rx, ry, rz, morph_type, box_size)
+build_crystal_system(rx, ry, rz, morph_type, box_size)
 

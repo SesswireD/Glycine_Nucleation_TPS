@@ -210,8 +210,16 @@ def build_system(num_gly, box_size):
     #Account for changes in .top file
     convert_topology(f"Data/Output/System/Monomer/gly_box_{num_gly}_{box_size}_solv.top", num_gly, num_sol)
 
+    #Report on resulting system
+    gly_con = calc_concentration(num_gly,num_sol)
+    print(f"Created a system of {num_gly} glycine molecules solvated in {num_sol} water molecules.\nThe system is surrounded by a {box_size}x{box_size}x{box_size} nm .\nThe concentration of glycine is {gly_con} mol/L")
 
-# build_system(120, 5.0)
+
+# print(calc_concentration(510,2600))
+# build_system(430, 5.0)
+
+
+
 
 
 
