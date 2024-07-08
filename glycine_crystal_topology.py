@@ -274,6 +274,296 @@ def write_gro_file(filename, cell_grid, lattice, mask, morph_type):
         file.write(f"   {box_size[0]:<9.5f}{box_size[1]:<9.5f}{box_size[2]:<9.5f}")
 
 
+def collect_gamma_molecules(cell_grid, mask):
+    """
+    Takes the random ordering of the coordinates in the gamma glycine unit cell and groups atoms by molecules.
+    A secondary result of this operation is that stray (incomplete) molecules are removed.
+
+    PARAMETERS:
+    -----------
+        cell_grid: numpy.ndarray
+            Each element is a unit cell that contains a (coordinates,atoms) list tuple.
+        mask: numpy.ndarray
+            A mask where each element contains an integer (0,1) denoting wether the unit cell is present.
+    
+    RETURNS:
+    --------
+        new_grid: numpy.ndarray
+            Similar to cell_grid, but with a different ordering of atoms.
+    """
+
+    #Get size of the cell
+    rx, ry, rz = cell_grid.shape
+
+    #get new grid
+    new_grid = cell_grid.copy()
+    
+    #Add padding to the mask 
+    padded_mask = np.pad(mask, pad_width=1, mode='constant', constant_values=0)
+   
+    #loop through the grid
+    for i in range(rx):
+        for j in range(ry):
+            for k in range(rz):
+                #check if current cell exists
+                if mask[i][j][k] == 1:
+
+                    #lists for  new ordering
+                    cell_coordinates = []
+                    cell_atoms = []
+
+                    #Check if the almost complete molecule can be completed (if the z+ neighbor cells are present)
+                    if padded_mask[i+1][j+1][k+2]:
+                        
+                        #Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i][j][k][0][2]) # N from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][14]) # CA from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][11]) # C from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][5])  # O from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][8])  # O1 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][17]) # H1 from z+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][20]) # H2 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][26]) # HA1 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][29]) # HA2 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][23]) # H3 from own cell
+
+                        #Add atom names such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i][j][k][1][2]) # N from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][14]) # CA from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][11]) # C from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][5])  # O from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][8])  # O1 from own cell
+                        cell_atoms.append(cell_grid[i][j][k+1][1][17]) # H1 from z+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][20]) # H2 from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][26]) # HA1 from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][29]) # HA2 from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][23]) # H3 from own cell
+
+                    # Check if the first carbon group can be completed (if the z- and y+ neighbor cells are present)
+                    if padded_mask[i+1][j+1][k] and padded_mask[i+1][j+2][k+1]:
+
+                        #Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i][j+1][k][0][0]) # N from y+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][12]) # CA from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][9])  # C from own cell 
+                        cell_coordinates.append(cell_grid[i][j+1][k][0][3])  # O from y+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][6]) # O1 from z-neighbor
+                        cell_coordinates.append(cell_grid[i][j+1][k][0][15])    # H1 from y+ neighbor
+                        cell_coordinates.append(cell_grid[i][j+1][k][0][18])    # H2 from from y+ neighbor
+                        cell_coordinates.append(cell_grid[i][j+1][k][0][24])  # HA1 from y+ neighbor 
+                        cell_coordinates.append(cell_grid[i][j][k][0][27])   # HA2 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][21])   # H3 from own cell
+                        
+                        #Add atom names such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i][j+1][k][1][0]) # N from y+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][12]) # CA from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][9])  # C from own cell 
+                        cell_atoms.append(cell_grid[i][j][k][1][3])  # O from own cell
+                        cell_atoms.append(cell_grid[i][j][k-1][1][6]) # O1 from z-neighbor
+                        cell_atoms.append(cell_grid[i][j+1][k][1][15])    # H1 from y+ neighbor
+                        cell_atoms.append(cell_grid[i][j+1][k][1][18])    # H2 from from y+ neighbor
+                        cell_atoms.append(cell_grid[i][j+1][k][1][24])  # HA1 from y+ neighbor 
+                        cell_atoms.append(cell_grid[i][j][k][1][27])   # HA2 from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][21])   # H3 from own cell
+
+                    # Check if the first nitrogen group can be completed (if the y- and (y-,z-) neighbor cells are present)
+                    if padded_mask[i+1][j][k+1] and padded_mask[i+1][j][k]:
+
+                        #Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i][j][k][0][0]) # N from own cell
+                        cell_coordinates.append(cell_grid[i][j-1][k][0][12]) # CA from y- neighbor
+                        cell_coordinates.append(cell_grid[i][j-1][k][0][9])  # C from y- neighbor 
+                        cell_coordinates.append(cell_grid[i][j][k][0][3])  # O from own cell
+                        cell_coordinates.append(cell_grid[i][j-1][k-1][0][6]) # O1 from (y-,z-) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][15])    # H1 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][18])    # H2 from from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][24])  # HA1 from own cell 
+                        cell_coordinates.append(cell_grid[i][j-1][k][0][27])   # HA2 from y- neigbor
+                        cell_coordinates.append(cell_grid[i][j-1][k][0][21])   # H3 from y- neighbor
+                        
+                        #Add atom names such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i][j][k][1][0]) # N from own cell
+                        cell_atoms.append(cell_grid[i][j-1][k][1][12]) # CA from y- neighbor
+                        cell_atoms.append(cell_grid[i][j-1][k][1][9])  # C from y- neighbor 
+                        cell_atoms.append(cell_grid[i][j][k][1][3])  # O from own cell
+                        cell_atoms.append(cell_grid[i][j-1][k-1][1][6]) # O1 from (y-,z-) neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][15])    # H1 from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][18])    # H2 from from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][24])  # HA1 from own cell 
+                        cell_atoms.append(cell_grid[i][j-1][k][1][27])   # HA2 from y- neigbor
+                        cell_atoms.append(cell_grid[i][j-1][k][1][21])   # H3 from y- neighbor
+
+                    # Check if the second nitrogen group can be completed (if the z-, x+ and (z-,x+) neighbor cells are present)
+                    if padded_mask[i+1][j+1][k] and padded_mask[i+2][j+1][k+1] and padded_mask[i+2][j+1][k]:
+
+                        #Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i][j][k][0][1])  # N from own cell
+                        cell_coordinates.append(cell_grid[i+1][j][k][0][13])  # CA from x+ neighbor
+                        cell_coordinates.append(cell_grid[i+1][j][k-1][0][10])  # C from (z-, x+) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][4])  # O from z-neighbor
+                        cell_coordinates.append(cell_grid[i+1][j][k-1][0][7])  # O1 from (z-,x+) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][16])  # H1 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][19])  # H2 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][25])  # HA1 from own cell
+                        cell_coordinates.append(cell_grid[i+1][j][k][0][28])  # HA2 from x+ neighbor
+                        cell_coordinates.append(cell_grid[i+1][j][k][0][22])  # H3 from x+ neighbor
+
+                        #Add coordinates such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i][j][k][1][1])  # N from own cell
+                        cell_atoms.append(cell_grid[i+1][j][k][1][13])  # CA from x+ neighbor
+                        cell_atoms.append(cell_grid[i+1][j][k-1][1][10])  # C from (z-, x+) neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][4])  # O from z-neighbor
+                        cell_atoms.append(cell_grid[i+1][j][k-1][1][7])  # O1 from (z-,x+) neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][16])  # H1 from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][19])  # H2 from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][25])  # HA1 from own cell
+                        cell_atoms.append(cell_grid[i+1][j][k][1][28])  # HA2 from x+ neighbor
+                        cell_atoms.append(cell_grid[i+1][j][k][1][22])  # H3 from x+ neighbor
+
+
+                    #Check if the second carbon group can be completed (if the z-, x- and (z-,x-) neighbor cells are present)
+                    if padded_mask[i+1][j+1][k] and padded_mask[i][j+1][k+1] and padded_mask[i][j+1][k]:
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i-1][j][k][0][1])  # N from x- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][13])  # CA from own cell
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][10])  # C from z- neighbor
+                        cell_coordinates.append(cell_grid[i-1][j][k-1][0][4])  # O from (x-,z-) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][7])  # O1 from z- neighbor
+                        cell_coordinates.append(cell_grid[i-1][j][k][0][16])  # H1 from x- neighbor
+                        cell_coordinates.append(cell_grid[i-1][j][k][0][19])  # H2 from x- neighbor
+                        cell_coordinates.append(cell_grid[i-1][j][k][0][25])  # HA1 from x- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][28])  # HA2 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k][0][22])  # H3 from own cell
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i-1][j][k][1][1])  # N from x- neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][13])  # CA from own cell
+                        cell_atoms.append(cell_grid[i][j][k-1][1][10])  # C from z- neighbor
+                        cell_atoms.append(cell_grid[i-1][j][k-1][1][4])  # O from (x-,z-) neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][7])  # O1 from z- neighbor
+                        cell_atoms.append(cell_grid[i-1][j][k][1][16])  # H1 from x- neighbor
+                        cell_atoms.append(cell_grid[i-1][j][k][1][19])  # H2 from x- neighbor
+                        cell_atoms.append(cell_grid[i-1][j][k][1][25])  # HA1 from x- neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][28])  # HA2 from own cell
+                        cell_atoms.append(cell_grid[i][j][k][1][22])  # H3 from own cell
+
+
+                    #Check if the carbon-oxygen group can be completed (if the z+, x- and (z+,x-) neighbor cells are present)
+                    if padded_mask[i+1][j+1][k+2] and padded_mask[i][j+1][k+1] and padded_mask[i][j+1][k+2]:
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i-1][j][k+1][0][1])  # N from (x-,z+) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][13])  # CA from z+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][10])  # C from own cell
+                        cell_coordinates.append(cell_grid[i-1][j][k][0][4])  # O from x- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][7])  # O1 from own cell
+                        cell_coordinates.append(cell_grid[i-1][j][k+1][0][16])  # H1 from (x-,z+) neighbor
+                        cell_coordinates.append(cell_grid[i-1][j][k+1][0][19])  # H2 from (x-,z+) neighbor
+                        cell_coordinates.append(cell_grid[i-1][j][k+1][0][25])  # HA1 from (x-,z+) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][28])  # HA2 from z+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][22])  # H3 from z+ neighbor
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i-1][j][k+1][1][1])  # N from (x-,z+) neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][13])  # CA from z+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][10])  # C from own cell
+                        cell_atoms.append(cell_grid[i-1][j][k][1][4])  # O from x- neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][7])  # O1 from own cell
+                        cell_atoms.append(cell_grid[i-1][j][k+1][1][16])  # H1 from (x-,z+) neighbor
+                        cell_atoms.append(cell_grid[i-1][j][k+1][1][19])  # H2 from (x-,z+) neighbor
+                        cell_atoms.append(cell_grid[i-1][j][k+1][1][25])  # HA1 from (x-,z+) neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][28])  # HA2 from z+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][22])  # H3 from z+ neighbor
+
+                    # Check if the single oxygen can be completed (if the z+, x+ and (z+,x+) neighbor cells are present)
+                    if padded_mask[i+1][j+1][k+2] and padded_mask[i+2][j+1][k+1] and padded_mask[i+2][j+1][k+2]:
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][1])  # N from z+ neighbor
+                        cell_coordinates.append(cell_grid[i+1][j][k+1][0][13])  # CA from (x+,z+) neighbor
+                        cell_coordinates.append(cell_grid[i+1][j][k][0][10])  # C from x+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][4])  # O from own cell
+                        cell_coordinates.append(cell_grid[i+1][j][k][0][7])  # O1 from x+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][16])  # H1 from z+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][19])  # H2 from z+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][25])  # HA1 from z+ neighbor
+                        cell_coordinates.append(cell_grid[i+1][j][k+1][0][28])  # HA2 from (x+,z+) neighbor
+                        cell_coordinates.append(cell_grid[i+1][j][k+1][0][22])  # H3 from (x+,z+) neighbor
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i][j][k+1][1][1])  # N from z+ neighbor
+                        cell_atoms.append(cell_grid[i+1][j][k+1][1][13])  # CA from (x+,z+) neighbor
+                        cell_atoms.append(cell_grid[i+1][j][k][1][10])  # C from x+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][4])  # O from own cell
+                        cell_atoms.append(cell_grid[i+1][j][k][1][7])  # O1 from x+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][16])  # H1 from z+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][19])  # H2 from z+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][25])  # HA1 from z+ neighbor
+                        cell_atoms.append(cell_grid[i+1][j][k+1][1][28])  # HA2 from (x+,z+) neighbor
+                        cell_atoms.append(cell_grid[i+1][j][k+1][1][22])  # H3 from (x+,z+) neighbor
+
+                    #Check if the second single oxygen can be completed (if the z+, y+ and (z+,y+) neighbor cells are present)
+                    if padded_mask[i+1][j+1][k+2] and padded_mask[i+1][j+2][k+1] and padded_mask[i][j+2][k+2]:
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i][j+1][k+1][0][0])   # N from (z+,y+) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][12])    # CA from z+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][9])     # C from z+ neighbor
+                        cell_coordinates.append(cell_grid[i][j+1][k+1][0][3])   # O from (z+,y+) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][6])       # O1 from own cell
+                        cell_coordinates.append(cell_grid[i][j+1][k+1][0][15])  # H1 from (z+,y+) neighbor
+                        cell_coordinates.append(cell_grid[i][j+1][k+1][0][18])  # H2 from (z+,y+) neighbor
+                        cell_coordinates.append(cell_grid[i][j+1][k+1][0][24])  # HA1 from (z+,y+) neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][27])    # HA2 from z+ neighbor
+                        cell_coordinates.append(cell_grid[i][j][k+1][0][21])    # H3 from z+ neighbor
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i][j+1][k+1][1][0])   # N from (z+,y+) neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][12])    # CA from z+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][9])     # C from z+ neighbor
+                        cell_atoms.append(cell_grid[i][j+1][k+1][1][3])   # O from (z+,y+) neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][6])       # O1 from own cell
+                        cell_atoms.append(cell_grid[i][j+1][k+1][1][15])  # H1 from (z+,y+) neighbor
+                        cell_atoms.append(cell_grid[i][j+1][k+1][1][18])  # H2 from (z+,y+) neighbor
+                        cell_atoms.append(cell_grid[i][j+1][k+1][1][24])  # HA1 from (z+,y+) neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][27])    # HA2 from z+ neighbor
+                        cell_atoms.append(cell_grid[i][j][k+1][1][21])    # H3 from z+ neighbor
+
+                    #Check if the second single hydrogen can be completed (if the z- neighbor cells are present)
+                    if padded_mask[i+1][j+1][k]:
+
+                        # Add coordinates such that they correspond to Gly molecule
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][2])   # N from z- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][14])    # CA from z- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][11])     # C from z- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][5])   # O from z- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][8])       # O1 from z- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k][0][17])  # H1 from own cell
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][20])  # H2 from z- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][26])  # HA1 from z- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][29])    # HA2 from z- neighbor
+                        cell_coordinates.append(cell_grid[i][j][k-1][0][23])    # H3 from z- neighbor
+
+                        # Add atom names such that they correspond to Gly molecule
+                        cell_atoms.append(cell_grid[i][j][k-1][1][2])   # N from z- neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][14])    # CA from z- neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][11])     # C from z- neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][5])   # O from z- neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][8])       # O1 from z- neighbor
+                        cell_atoms.append(cell_grid[i][j][k][1][17])  # H1 from own cell
+                        cell_atoms.append(cell_grid[i][j][k-1][1][20])  # H2 from z- neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][26])  # HA1 from z- neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][29])    # HA2 from z- neighbor
+                        cell_atoms.append(cell_grid[i][j][k-1][1][23])    # H3 from z- neighbor
+
+                    #Add the grouped coordinates to the cell
+                    new_grid[i][j][k] = (cell_coordinates,cell_atoms)
+                    
+
+    return new_grid
+
+
 def collect_alpha_molecules(cell_grid, mask):
     """
     Takes the random ordering of the coordinates in the alpha glycine unit cell and groups atoms by molecules.
@@ -512,7 +802,7 @@ def build_crystal_system(rx,ry,rz, morph_type, box_size, max_sol=np.inf):
         raise NotImplemented
     
     if morph_type == "gamma":
-        raise NotImplemented
+        cell_grid = collect_gamma_molecules(cell_grid, mask)
 
     #Save the initial crystal
     write_gro_file(f"Data/Output/System/Crystal/{morph_type}_glycine_crystal_{rx}_{ry}_{rz}.gro", cell_grid, lattice, mask, morph_type)
@@ -542,7 +832,7 @@ def build_crystal_system(rx,ry,rz, morph_type, box_size, max_sol=np.inf):
 
 #PARAMETERS:
 rx, ry, rz = 3, 1, 3
-morph_type = "alpha"
+morph_type = "gamma"
 mask_type = "square"
 box_size = 5.0
 
