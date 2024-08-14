@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import math
 
 #Import own conversion functions
 from glycine_monomer_topology import convert_topology
@@ -86,6 +87,43 @@ def remove_molecules(posre_indices, atom_coordinates, atom_names):
     return atom_coordinates, atom_names
 
 
+def calc_concentration(box_size, radius, num_insert):
+    """Estimates the concentration of dispersed glycine around a spherical crystal.
+
+    PARAMETERS:
+    -----------
+        posre_indices: list
+            List of atom indices to keep.
+        atom_coordinates: list
+            List of np.arrays containing the xyz coordinates of the atoms.
+        atom_names: list
+            List containing the atom_names .
+    
+    RETURNS:
+    --------
+        atom_coordinates: list
+            Shortened list of np.arrays containing the xyz coordinates of the atoms.
+        atom_names: list
+            Shortened list containing the atom_names. 
+    """ 
+    #Calculate the volume of the box in nm^3
+    box_volume = box_size ** 3
+
+    #Calculate the volume of the glycine sphere in nm^3
+    sphere_volume = (4/3) * math.pi * radius ** 3
+
+    #Calculate the volume of water and dispersed glycine in liters ((1 nm^3 = 1e-24 L))
+    water_volume = (box_volume - sphere_volume) * 1e-24
+
+    #Calculate the number of moles of dispersed glycine (1 mole = 6.022e23 molecules)
+    num_insert_mol = num_insert / 6.022e23
+
+    #Calculate the concentration of glycine in mol/L
+    concentration = num_insert_mol / water_volume
+
+    return round(concentration,2)
+
+
 def build_spherical_cluster(system, distance, point = None):
     """Builds a molecular system of a spherical glycine cluster of certain diameter,
     based on a crystal system and saves it to a .gro file. 
@@ -125,10 +163,10 @@ def build_spherical_cluster(system, distance, point = None):
     write_gro_file(f"{output_path}{system}_{distance}nm_sphere.gro", atom_coordinates, atom_names, distance, box_size)
 
 
-def build_spherical_system(system, distance, point = None):
+def build_spherical_system(system, distance, num_insert=np.inf, point = None):
     """Builds a molecular system of a spherical glycine cluster from a perfect crystal
-    that is surrounded by free floating glycine molecules and water. Preserves the concentration
-    of the initial crystal system.
+    that is surrounded by free floating glycine molecules and water. By default it preserves 
+    the concentration of the initial crystal system.
 
     PARAMETERS:
     -----------
@@ -153,42 +191,60 @@ def build_spherical_system(system, distance, point = None):
 
     #Get number of glycine molecules in spherical cluster system
     num_gly_sp, _ = count_molecules(f"{output_path}{system}_{distance}nm_sphere.gro")
+    
+    #Check if all gly molecules need to be inserted
+    if num_insert > (num_gly_or-num_gly_sp):
+        num_insert = num_gly_or - num_gly_sp
 
-    #Insert free floating glycine molecules to preserve concentration
-    os.system(
-        f"gmx insert-molecules "                                     #Gromacs insert command
-        f"-f {output_path}{system}_{distance}nm_sphere.gro "         #System to insert to
-        f"-ci Data/Input/System/glycine_match.pdb "                  #Molecule to insert
-        f"-nmol {num_gly_or - num_gly_sp} "                          #Number of molecules to insert
-        f"-o {output_path}{system}_{distance}nm_sphere_insert.gro"   #Output file
-        )
+    #Insert free floating glycine molecules if necessary
+    if num_insert > 0:
+        os.system(
+            f"gmx insert-molecules "                                     #Gromacs insert command
+            f"-f {output_path}{system}_{distance}nm_sphere.gro "         #System to insert to
+            f"-ci Data/Input/System/glycine_match.pdb "                  #Molecule to insert
+            f"-nmol {num_insert} "                                       #Number of molecules to insert
+            f"-o {output_path}{system}_{distance}nm_sphere_insert_{num_insert}.gro"   #Output file
+            )
 
-    #Solvate the system
-    os.system(
-        f"gmx solvate "                                                  #Gromacs solvate command
-        f"-cp {output_path}{system}_{distance}nm_sphere_insert.gro "     #System to solvate
-        f"-cs spc216.gro "                                               #Water model to use
-        f"-o {output_path}{system}_{distance}nm_sphere_insert_solv.gro") #Output file
+        #Solvate the inserted system
+        os.system(
+            f"gmx solvate "                                                  #Gromacs solvate command
+            f"-cp {output_path}{system}_{distance}nm_sphere_insert_{num_insert}.gro "     #System to solvate
+            f"-cs spc216.gro "                                               #Water model to use
+            f"-o {output_path}{system}_{distance}nm_sphere_insert_{num_insert}_solv.gro") #Output file
+    else:
+        #Solvate the UNinserted system
+        os.system(
+            f"gmx solvate "                                                  #Gromacs solvate command
+            f"-cp {output_path}{system}_{distance}nm_sphere.gro "     #System to solvate
+            f"-cs spc216.gro "                                               #Water model to use
+            f"-o {output_path}{system}_{distance}nm_sphere_insert_{num_insert}_solv.gro") #Output file
 
     #Create topology file for the UNsolvated system
-    convert_topology(f"{output_path}{system}_{distance}nm_sphere_insert.top", num_gly_or, 0)
+    convert_topology(f"{output_path}{system}_{distance}nm_sphere_insert_{num_insert}.top", num_gly_sp + num_insert, 0)
 
     #Get the number of glycine and water molecules from the solvated system 
-    num_gly, num_sol = count_molecules(f"{output_path}{system}_{distance}nm_sphere_insert_solv.gro")
+    num_gly, num_sol = count_molecules(f"{output_path}{system}_{distance}nm_sphere_insert_{num_insert}_solv.gro")
 
     #Create topology file for the solvated system
-    convert_topology(f"{output_path}{system}_{distance}nm_sphere_insert_solv.top",num_gly, num_sol)
+    convert_topology(f"{output_path}{system}_{distance}nm_sphere_insert_{num_insert}_solv.top",num_gly, num_sol)
+
+    #Calculate concentration and report on final system
+    gly_conc = calc_concentration(box_size, distance, num_insert)
+    print(f"Created a {morph_type} glycine crystal with a {distance}nm radius consiting of {num_gly_sp} glycine molecules.\nThe crystal is surrounded by a {box_size}x{box_size}x{box_size} nm box with {num_sol} water molecules and {num_insert} dispersed glycine.\nThe concentration of glycine is {gly_conc} mol/L")
+
 
 
 #PARAMETERS:
-rx, ry, rz = 3, 1, 3
-morph_type = "alpha"
+rx, ry, rz = 3, 2, 3
+morph_type = "gamma"
 box_size = 5.0
-distance = 1.2
+distance = 0.4
 system = f"{morph_type}_glycine_crystal_{rx}_{ry}_{rz}_box_{box_size}"
+num_insert = 3000000
 
-#Build sphere system with different cluster radii
+# #Build sphere system with different cluster radii
 # for i in np.linspace(1.8, 0.4, 8 ):
-# build_spherical_system(system, round(i,1))
+#     build_spherical_system(system, round(i,1), num_insert)
 
-# build_spherical_system(system, distance)
+build_spherical_system(system, distance, num_insert)

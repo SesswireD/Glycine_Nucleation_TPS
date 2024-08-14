@@ -18,7 +18,7 @@
 
 [ moleculetype ]
 ;name            nrexcl
-glycine          636
+glycine          487
 
 [ atoms ]
 ;   nr  type  resi  res  atom  cgnr     charge      mass       ; qtot   bond_type
@@ -122,9 +122,9 @@ glycine          636
 
 
 [ system ]
-636 glycine molecules in 0 water molecules
+487 glycine molecules in 2379 water molecules
 
 [ molecules ]
 ; Compound        nmols
-glycine          636
-SOL              0
+glycine          487
+SOL              2379

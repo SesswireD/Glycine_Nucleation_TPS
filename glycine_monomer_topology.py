@@ -215,7 +215,8 @@ def build_system(num_gly, box_size):
     print(f"Created a system of {num_gly} glycine molecules solvated in {num_sol} water molecules.\nThe system is surrounded by a {box_size}x{box_size}x{box_size} nm .\nThe concentration of glycine is {gly_con} mol/L")
 
 
-# print(calc_concentration(510,2600))
+# print(calc_concentration(25, 2242))
+
 # build_system(430, 5.0)
 
 
